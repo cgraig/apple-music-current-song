@@ -1,6 +1,16 @@
 #include <iostream>
 #include <conio.h>
+#include <algorithm>
 #include "AppleMusicPlayer.h"
+
+std::string ConvertToAscii(std::wstring inputStr)
+{
+    std::string str;
+    std::transform(inputStr.begin(), inputStr.end(), std::back_inserter(str), [](wchar_t c) {
+        return (char)c;
+        });
+    return str;
+}
 
 int main()
 {
@@ -46,9 +56,11 @@ int main()
         }
 
         if (update) {
-            std::wcout << "Current Artist: " << amp.GetCurrentArtist() << std::endl;
-            std::wcout << "Album: " << amp.GetCurrentAlbum() << std::endl;
-            std::wcout << "Song: " << currentSong << std::endl << std::endl;
+            // The console might not like unicode characters unfortunately,
+            // convert them to ASCII before printing out
+            std::cout << "Current Artist: " << ConvertToAscii(amp.GetCurrentArtist()) << std::endl;
+            std::cout << "Album: " << ConvertToAscii(amp.GetCurrentAlbum()) << std::endl;
+            std::cout << "Song: " << ConvertToAscii(currentSong) << std::endl << std::endl;
         }
 
         Sleep(1000);
