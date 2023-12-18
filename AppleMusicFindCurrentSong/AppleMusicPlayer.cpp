@@ -182,7 +182,7 @@ std::wstring AppleMusicPlayer::GetCurrentAlbum()
 
             // There could be multiple parts with another \u2014 character
             // grab album from in-between these 2 characters
-            size_t nextEmPos = album.find(L'\u2014', foundPos);
+            size_t nextEmPos = album.find(L'\u2014');
             if (nextEmPos != std::wstring::npos)
             {
                 album = album.substr(0, nextEmPos);
