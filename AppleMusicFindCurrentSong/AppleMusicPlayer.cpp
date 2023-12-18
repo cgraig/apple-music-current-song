@@ -140,7 +140,7 @@ std::wstring AppleMusicPlayer::GetCurrentArtist()
         std::wstring wstr(static_cast<wchar_t*>(name));
         size_t foundPos = wstr.find(L'\u2014');
         if (foundPos != std::wstring::npos) {
-            // Split the string
+            // Artist is beginning part of string preceding the \u2014 character
             std::wstring artist = wstr.substr(0, foundPos);
 
             trim(artist);
@@ -177,8 +177,16 @@ std::wstring AppleMusicPlayer::GetCurrentAlbum()
         std::wstring wstr(static_cast<wchar_t*>(name));
         size_t foundPos = wstr.find(L'\u2014');
         if (foundPos != std::wstring::npos) {
-            // Split the string
+            // Album is second part of string after the \u2014 character
             std::wstring album = wstr.substr(foundPos + 1);
+
+            // There could be multiple parts with another \u2014 character
+            // grab album from in-between these 2 characters
+            size_t nextEmPos = album.find(L'\u2014', foundPos);
+            if (nextEmPos != std::wstring::npos)
+            {
+                album = album.substr(0, nextEmPos);
+            }
 
             trim(album);
 
@@ -299,7 +307,7 @@ HRESULT AppleMusicPlayer::InitializeAutomation()
     }
 
     CComPtr<IUIAutomationElement> lcd;
-    hr = transportBar->FindFirst(TreeScope_Descendants, lcdCondition, &lcd);
+    hr = root->FindFirst(TreeScope_Descendants, lcdCondition, &lcd);
     if (FAILED(hr) || lcd == nullptr) {
         if (SUCCEEDED(hr) && lcd == nullptr)
         {

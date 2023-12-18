@@ -48,7 +48,7 @@ int main()
         if (update) {
             std::wcout << "Current Artist: " << amp.GetCurrentArtist() << std::endl;
             std::wcout << "Album: " << amp.GetCurrentAlbum() << std::endl;
-            std::wcout << "Song: " << amp.GetCurrentSongTitle() << std::endl << std::endl;
+            std::wcout << "Song: " << currentSong << std::endl << std::endl;
         }
 
         Sleep(1000);
