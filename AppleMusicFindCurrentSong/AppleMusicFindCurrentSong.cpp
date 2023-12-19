@@ -1,7 +1,7 @@
 #include <iostream>
 #include <conio.h>
 #include <algorithm>
-#include "AppleMusicPlayer.h"
+#include <AppleMusicPlayer.h>
 
 std::string ConvertToAscii(std::wstring inputStr)
 {

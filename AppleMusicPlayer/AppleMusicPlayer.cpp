@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include "AppleMusicPlayer.h"
 
+const std::wstring AppleMusicPlayer::APPLE_MUSIC_NAME = L"AppleMusic.exe";
+
 AppleMusicPlayer::AppleMusicPlayer(bool initializeCom) : 
 	_pAutomation(nullptr), _appleMusicHwnd(nullptr), _appleMusicPid(0), _pArtistAlbumElement(nullptr), _pSongElement(nullptr)
 {

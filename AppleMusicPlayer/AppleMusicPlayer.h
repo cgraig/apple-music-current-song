@@ -1,5 +1,7 @@
 #pragma once
 
+#define DllExport  __declspec( dllexport )
+
 #include <string>
 #include <uiautomation.h>
 #include <atlbase.h>
@@ -7,24 +9,24 @@
 class AppleMusicPlayer {
 public:
     // Default constructor will initialize COM
-    AppleMusicPlayer();
+    DllExport AppleMusicPlayer();
     // Provide another constructor to explicitly opt in/out of
     // COM init/deinit
-    AppleMusicPlayer(bool initializeCom);
+    DllExport AppleMusicPlayer(bool initializeCom);
 
-    ~AppleMusicPlayer();
+    DllExport ~AppleMusicPlayer();
 
     // Check if Apple Music process is running
-    bool IsAppleMusicRunning();
+    DllExport bool IsAppleMusicRunning();
 
     // Get the artist of the current playing song
-    std::wstring GetCurrentArtist();
+    DllExport std::wstring GetCurrentArtist();
 
     // Get the title of the current playing song
-    std::wstring GetCurrentSongTitle();
+    DllExport std::wstring GetCurrentSongTitle();
 
     // Get the album of the current playing song
-    std::wstring GetCurrentAlbum();
+    DllExport std::wstring GetCurrentAlbum();
 
 private:
     // Do not use CComPtr for these objects as it's possible
@@ -48,7 +50,7 @@ private:
     HRESULT InitializeAutomation();
     static BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam);
 
-    inline static const std::wstring APPLE_MUSIC_NAME = L"AppleMusic.exe";
+    static const std::wstring APPLE_MUSIC_NAME;
 };
 
 class ComException : public std::runtime_error {

@@ -5,22 +5,28 @@ VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AppleMusicFindCurrentSong", "AppleMusicFindCurrentSong\AppleMusicFindCurrentSong.vcxproj", "{D66C6BEA-B91C-4CDA-938B-83158DD7451C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AppleMusicPlayerUnitTest", "AppleMusicPlayerUnitTest\AppleMusicPlayerUnitTest.vcxproj", "{31DF21C4-5A82-4022-90BF-D93672C1710E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AppleMusicPlayer", "AppleMusicPlayer\AppleMusicPlayer.vcxproj", "{D57B94BC-00E0-483C-84B4-66A21EE5264C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
-		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
-		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{D66C6BEA-B91C-4CDA-938B-83158DD7451C}.Debug|x64.ActiveCfg = Debug|x64
 		{D66C6BEA-B91C-4CDA-938B-83158DD7451C}.Debug|x64.Build.0 = Debug|x64
-		{D66C6BEA-B91C-4CDA-938B-83158DD7451C}.Debug|x86.ActiveCfg = Debug|Win32
-		{D66C6BEA-B91C-4CDA-938B-83158DD7451C}.Debug|x86.Build.0 = Debug|Win32
 		{D66C6BEA-B91C-4CDA-938B-83158DD7451C}.Release|x64.ActiveCfg = Release|x64
 		{D66C6BEA-B91C-4CDA-938B-83158DD7451C}.Release|x64.Build.0 = Release|x64
-		{D66C6BEA-B91C-4CDA-938B-83158DD7451C}.Release|x86.ActiveCfg = Release|Win32
-		{D66C6BEA-B91C-4CDA-938B-83158DD7451C}.Release|x86.Build.0 = Release|Win32
+		{31DF21C4-5A82-4022-90BF-D93672C1710E}.Debug|x64.ActiveCfg = Debug|x64
+		{31DF21C4-5A82-4022-90BF-D93672C1710E}.Debug|x64.Build.0 = Debug|x64
+		{31DF21C4-5A82-4022-90BF-D93672C1710E}.Release|x64.ActiveCfg = Release|x64
+		{31DF21C4-5A82-4022-90BF-D93672C1710E}.Release|x64.Build.0 = Release|x64
+		{D57B94BC-00E0-483C-84B4-66A21EE5264C}.Debug|x64.ActiveCfg = Debug|x64
+		{D57B94BC-00E0-483C-84B4-66A21EE5264C}.Debug|x64.Build.0 = Debug|x64
+		{D57B94BC-00E0-483C-84B4-66A21EE5264C}.Release|x64.ActiveCfg = Release|x64
+		{D57B94BC-00E0-483C-84B4-66A21EE5264C}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
