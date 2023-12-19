@@ -3,25 +3,34 @@
 #include <stdexcept>
 #include "AppleMusicPlayer.h"
 
-AppleMusicPlayer::AppleMusicPlayer() : 
+AppleMusicPlayer::AppleMusicPlayer(bool initializeCom) : 
 	_pAutomation(nullptr), _appleMusicHwnd(nullptr), _appleMusicPid(0), _pArtistAlbumElement(nullptr), _pSongElement(nullptr)
 {
-    HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
-    if (SUCCEEDED(hr)) {
-        hr = CoCreateInstance(CLSID_CUIAutomation, nullptr,
-            CLSCTX_INPROC_SERVER, IID_IUIAutomation,
-            reinterpret_cast<void**>(&_pAutomation));
-        if (FAILED(hr)) {
-            _pAutomation = nullptr;
-            throw new ComException("Failed to initialize COM!", hr);
+    if (initializeCom)
+    {
+        _comInitializedByUser = false;
+
+        HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
+        if (SUCCEEDED(hr)) {
+            hr = CoCreateInstance(CLSID_CUIAutomation, nullptr,
+                CLSCTX_INPROC_SERVER, IID_IUIAutomation,
+                reinterpret_cast<void**>(&_pAutomation));
+            if (FAILED(hr)) {
+                _pAutomation = nullptr;
+                throw new ComException("Failed to initialize COM!", hr);
+            }
         }
     }
+
+    _comInitializedByUser = !initializeCom;
 
     if (FindAppleMusic())
     {
         InitializeAutomation();
     }
 }
+
+AppleMusicPlayer::AppleMusicPlayer() : AppleMusicPlayer(true) {}
 
 AppleMusicPlayer::~AppleMusicPlayer()
 {
@@ -40,7 +49,9 @@ AppleMusicPlayer::~AppleMusicPlayer()
         _pSongElement = nullptr;
     }
 
-    CoUninitialize();
+    if (!_comInitializedByUser) {
+        CoUninitialize();
+    }
 }
 
 bool AppleMusicPlayer::IsAppleMusicPid(DWORD processId)
