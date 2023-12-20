@@ -5,54 +5,11 @@
 
 const std::wstring AppleMusicPlayer::APPLE_MUSIC_NAME = L"AppleMusic.exe";
 
-AppleMusicPlayer::AppleMusicPlayer(bool initializeCom) : 
+AppleMusicPlayer::AppleMusicPlayer() : 
 	_pAutomation(nullptr), _appleMusicHwnd(nullptr), _appleMusicPid(0), _pArtistAlbumElement(nullptr), _pSongElement(nullptr)
 {
-    if (initializeCom)
-    {
-        _comInitializedByUser = false;
-
-        HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
-        if (SUCCEEDED(hr)) {
-            hr = CoCreateInstance(CLSID_CUIAutomation, nullptr,
-                CLSCTX_INPROC_SERVER, IID_IUIAutomation,
-                reinterpret_cast<void**>(&_pAutomation));
-            if (FAILED(hr)) {
-                _pAutomation = nullptr;
-                throw new ComException("Failed to initialize COM!", hr);
-            }
-        }
-    }
-
-    _comInitializedByUser = !initializeCom;
-
-    if (FindAppleMusic())
-    {
+    if (FindAppleMusic()) {
         InitializeAutomation();
-    }
-}
-
-AppleMusicPlayer::AppleMusicPlayer() : AppleMusicPlayer(true) {}
-
-AppleMusicPlayer::~AppleMusicPlayer()
-{
-    if (_pAutomation) {
-        _pAutomation->Release();
-        _pAutomation = nullptr;
-    }
-
-    if (_pArtistAlbumElement) {
-        _pArtistAlbumElement->Release();
-        _pArtistAlbumElement = nullptr;
-    }
-
-    if (_pSongElement) {
-        _pSongElement->Release();
-        _pSongElement = nullptr;
-    }
-
-    if (!_comInitializedByUser) {
-        CoUninitialize();
     }
 }
 
@@ -61,24 +18,21 @@ bool AppleMusicPlayer::IsAppleMusicPid(DWORD processId)
     WCHAR szProcessName[MAX_PATH] = L"";
     bool found = false;
 
-    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION |
-        PROCESS_VM_READ,
-        FALSE, processId);
-    if (NULL != hProcess)
-    {
+    HANDLE hProcess = OpenProcess(
+        PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+        FALSE, 
+        processId);
+    if (NULL != hProcess) {
         HMODULE hMod;
         DWORD cbNeeded;
 
-        if (EnumProcessModules(hProcess, &hMod, sizeof(hMod),
-            &cbNeeded))
-        {
+        if (EnumProcessModules(hProcess, &hMod, sizeof(hMod), &cbNeeded)) {
             GetModuleBaseName(hProcess, hMod, szProcessName,
                 sizeof(szProcessName) / sizeof(WCHAR));
 
             std::wstring processName(szProcessName);
             std::wstring appleMusicName = APPLE_MUSIC_NAME;
-            if (processName.find(appleMusicName) != std::string::npos)
-            {
+            if (processName.find(appleMusicName) != std::string::npos) {
                 found = true;
             }
         }
@@ -98,10 +52,8 @@ BOOL CALLBACK AppleMusicPlayer::EnumWindowsProc(HWND hWnd, LPARAM lParam)
     DWORD processId = 0;
     GetWindowThreadProcessId(hWnd, &processId);
 
-    if (amp->_appleMusicPid == processId)
-    {
-        if (IsWindowVisible(hWnd) && GetWindowTextLength(hWnd) > 0)
-        {
+    if (amp->_appleMusicPid == processId) {
+        if (IsWindowVisible(hWnd) && GetWindowTextLength(hWnd) > 0) {
             amp->_appleMusicHwnd = hWnd;
             // Found it stop enumerating
             return FALSE;
@@ -130,20 +82,16 @@ static inline void trim(std::wstring& s) {
 
 std::wstring AppleMusicPlayer::GetCurrentArtist()
 {
-    if (!IsAppleMusicStillRunning() || !_pArtistAlbumElement)
-    {
-        if (!FindAppleMusic())
-        {
+    if (!IsAppleMusicStillRunning() || !_pArtistAlbumElement) {
+        if (!FindAppleMusic()) {
             return L"";
         }
 
-        if (FAILED(InitializeAutomation()))
-        {
+        if (FAILED(InitializeAutomation())) {
             return L"";
         }
 
-        if (!_pArtistAlbumElement)
-        {
+        if (!_pArtistAlbumElement) {
             return L"";
         }
     }
@@ -167,20 +115,16 @@ std::wstring AppleMusicPlayer::GetCurrentArtist()
 
 std::wstring AppleMusicPlayer::GetCurrentAlbum()
 {
-    if (!IsAppleMusicStillRunning() || !_pArtistAlbumElement)
-    {
-        if (!FindAppleMusic())
-        {
+    if (!IsAppleMusicStillRunning() || !_pArtistAlbumElement) {
+        if (!FindAppleMusic()) {
             return L"";
         }
 
-        if (FAILED(InitializeAutomation()))
-        {
+        if (FAILED(InitializeAutomation())) {
             return L"";
         }
 
-        if (!_pArtistAlbumElement)
-        {
+        if (!_pArtistAlbumElement) {
             return L"";
         }
     }
@@ -212,20 +156,16 @@ std::wstring AppleMusicPlayer::GetCurrentAlbum()
 
 std::wstring AppleMusicPlayer::GetCurrentSongTitle()
 {
-    if (!IsAppleMusicStillRunning() || !_pSongElement)
-    {
-        if (!FindAppleMusic())
-        {
+    if (!IsAppleMusicStillRunning() || !_pSongElement) {
+        if (!FindAppleMusic()) {
             return L"";
         }
 
-        if (FAILED(InitializeAutomation()))
-        {
+        if (FAILED(InitializeAutomation())) {
             return L"";
         }
 
-        if (!_pSongElement)
-        {
+        if (!_pSongElement) {
             return L"";
         }
     }
@@ -245,28 +185,23 @@ bool AppleMusicPlayer::FindAppleMusic()
     bool found = false;
     unsigned int i;
 
-    if (!EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded))
-    {
+    if (!EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded)) {
         return false;
     }
 
     cProcesses = cbNeeded / sizeof(DWORD);
 
     _appleMusicPid = 0;
-    for (i = 0; i < cProcesses; i++)
-    {
-        if (aProcesses[i] != 0)
-        {
-            if (IsAppleMusicPid(aProcesses[i]))
-            {
+    for (i = 0; i < cProcesses; i++) {
+        if (aProcesses[i] != 0) {
+            if (IsAppleMusicPid(aProcesses[i])) {
                 _appleMusicPid = aProcesses[i];
                 found = true;
             }
         }
     }
 
-    if (found)
-    {
+    if (found) {
         _appleMusicHwnd = NULL;
         EnumWindows(EnumWindowsProc, reinterpret_cast<LPARAM>(this));
     }
@@ -278,14 +213,14 @@ HRESULT AppleMusicPlayer::InitializeAutomation()
 {
     HRESULT hr = S_OK;
 
-    if (_pSongElement) {
-        _pSongElement->Release();
-        _pSongElement = nullptr;
-    }
-
-    if (_pArtistAlbumElement) {
-        _pArtistAlbumElement->Release();
-        _pArtistAlbumElement = nullptr;
+    if (_pAutomation == nullptr) {
+        hr = CoCreateInstance(CLSID_CUIAutomation, nullptr,
+            CLSCTX_INPROC_SERVER, IID_IUIAutomation,
+            reinterpret_cast<void**>(&_pAutomation));
+        if (FAILED(hr)) {
+            _pAutomation = nullptr;
+            return hr;
+        }
     }
     
     CComPtr<IUIAutomationElement> root;
@@ -314,8 +249,7 @@ HRESULT AppleMusicPlayer::InitializeAutomation()
     }
 
     CComPtr<IUIAutomationCondition> lcdCondition;
-    if (FAILED(_pAutomation->CreatePropertyCondition(UIA_AutomationIdPropertyId, CComVariant("LCD"), &lcdCondition)))
-    {
+    if (FAILED(_pAutomation->CreatePropertyCondition(UIA_AutomationIdPropertyId, CComVariant("LCD"), &lcdCondition))) {
         return hr;
     }
 
@@ -330,21 +264,18 @@ HRESULT AppleMusicPlayer::InitializeAutomation()
     }
 
     CComPtr<IUIAutomationCondition> scrollingTextCondition;
-    if (FAILED(_pAutomation->CreatePropertyCondition(UIA_AutomationIdPropertyId, CComVariant("ScrollingText"), &scrollingTextCondition)))
-    {
+    if (FAILED(_pAutomation->CreatePropertyCondition(UIA_AutomationIdPropertyId, CComVariant("ScrollingText"), &scrollingTextCondition))) {
         return hr;
     }
 
     CComPtr<IUIAutomationElementArray> arr;
-    if (FAILED(lcd->FindAll(TreeScope_Descendants, scrollingTextCondition, &arr)))
-    {
+    if (FAILED(lcd->FindAll(TreeScope_Descendants, scrollingTextCondition, &arr))) {
         return hr;
     }
 
     int count = 0;
     arr->get_Length(&count);
-    for (int i = 0; i < count; i++)
-    {
+    for (int i = 0; i < count; i++) {
         CComBSTR name;
         IUIAutomationElement *textElement;
         if (SUCCEEDED(arr->GetElement(i, &textElement))) {
@@ -367,8 +298,7 @@ HRESULT AppleMusicPlayer::InitializeAutomation()
 bool AppleMusicPlayer::IsAppleMusicRunning()
 {
     // Check if existing pid is still apple music
-    if (IsAppleMusicStillRunning())
-    {
+    if (IsAppleMusicStillRunning()) {
         return true;
     }
 
