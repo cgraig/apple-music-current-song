@@ -7,7 +7,9 @@ Unfortunately Apple Music API doesn't have a "get current playing song" method t
 - Contributing
 
 ## Installation
-Need to create some binaries and upload: TBD.
+Grab AppleMusicFindCurrentSong.exe and AppleMusicPlayer.dll from the latest release, put them in same directory, and launch from command line!
+
+AppleMusicFindCurrentSong [-o|--output-file] <full_path>
 
 ## Compilation
 Should "just build" if you're on a Windows PC and using Visual Studio 2022 Community or above (although I have to admit I haven't tried anything other than Community Edition).
