@@ -77,8 +77,7 @@ int main(const int argc, const char *argv[])
 
     // First we must initialize COM as the AppleMusicPlayer object/class requires it
     HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE);
-    if (FAILED(hr))
-    {
+    if (FAILED(hr)) {
         std::cerr << "Failed to initialize COM, exiting. (Error Code: " << hr << ")" << std::endl;
         return hr;
     }
@@ -102,8 +101,7 @@ int main(const int argc, const char *argv[])
 
         std::cout << "Trying to find Apple Music process...";
         bool pressAnyKeyOutput = false;
-        do
-        {
+        do {
             if (appleMusicFound = amp.IsAppleMusicRunning()) {
                 break;
             }
@@ -118,8 +116,7 @@ int main(const int argc, const char *argv[])
 
         } while (!_kbhit());
 
-        if (!appleMusicFound)
-        {
+        if (!appleMusicFound) {
             goto Exit;
         }
 
@@ -127,14 +124,12 @@ int main(const int argc, const char *argv[])
 
         std::cout << "Press any key to exit" << std::endl << std::endl;
 
-        do
-        {
+        do {
             bool update = false;
 
             // Check song, only update if the song title changes
             std::wstring currentSong = amp.GetCurrentSongTitle();
-            if (previousSong.compare(currentSong) != 0)
-            {
+            if (previousSong.compare(currentSong) != 0) {
                 update = true;
                 previousSong = currentSong;
             }

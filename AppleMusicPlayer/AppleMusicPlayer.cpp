@@ -140,8 +140,7 @@ std::wstring AppleMusicPlayer::GetCurrentAlbum()
             // There could be multiple parts with another \u2014 character
             // grab album from in-between these 2 characters
             size_t nextEmPos = album.find(L'\u2014');
-            if (nextEmPos != std::wstring::npos)
-            {
+            if (nextEmPos != std::wstring::npos) {
                 album = album.substr(0, nextEmPos);
             }
 
@@ -233,16 +232,14 @@ HRESULT AppleMusicPlayer::InitializeAutomation()
     }
     
     CComPtr<IUIAutomationCondition> transportBarCondition;
-    if (FAILED(_pAutomation->CreatePropertyCondition(UIA_AutomationIdPropertyId, CComVariant("TransportBar"), &transportBarCondition)))
-    {
+    if (FAILED(_pAutomation->CreatePropertyCondition(UIA_AutomationIdPropertyId, CComVariant("TransportBar"), &transportBarCondition))) {
         return hr;
     }
 
     CComPtr<IUIAutomationElement> transportBar;
     hr = root->FindFirst(TreeScope_Descendants, transportBarCondition, &transportBar);
     if (FAILED(hr) || transportBar == nullptr) {
-        if (SUCCEEDED(hr) && transportBar == nullptr)
-        {
+        if (SUCCEEDED(hr) && transportBar == nullptr) {
             hr = E_FAIL;
         }
         return hr;
@@ -256,8 +253,7 @@ HRESULT AppleMusicPlayer::InitializeAutomation()
     CComPtr<IUIAutomationElement> lcd;
     hr = root->FindFirst(TreeScope_Descendants, lcdCondition, &lcd);
     if (FAILED(hr) || lcd == nullptr) {
-        if (SUCCEEDED(hr) && lcd == nullptr)
-        {
+        if (SUCCEEDED(hr) && lcd == nullptr) {
             hr = E_FAIL;
         }
         return hr;
