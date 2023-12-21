@@ -1,6 +1,9 @@
 #include <iostream>
+#include <fstream>
 #include <conio.h>
 #include <algorithm>
+#include <vector>
+#include <filesystem>
 #include <AppleMusicPlayer.h>
 
 std::string ConvertToAscii(std::wstring inputStr)
@@ -12,9 +15,65 @@ std::string ConvertToAscii(std::wstring inputStr)
     return str;
 }
 
-int main()
+bool g_OutputSong = false;
+std::filesystem::path g_OutputFilePath = "";
+
+void Usage()
+{
+    std::cerr << "usage: AppleMusicFindCurrentSong [-o|--output-file] <full_path>" << std::endl;
+}
+
+void ParseCommandLine(const int argc, const char* argv[])
+{
+    std::vector<std::string_view> args(argv + 1, argv + argc);
+    std::filesystem::path fullFilePath = "";
+    std::filesystem::path filePath = "";
+
+    if (argc > 3) {
+        throw std::runtime_error("Too many command line arguments.");
+    }
+
+    for (auto it = args.begin(), end = args.end(); it != end; ++it) {
+        if (*it == "-o" || *it == "--output-file") {
+            if (it + 1 != end) {
+                it++;
+                fullFilePath = *it;
+                filePath = fullFilePath;
+            }
+            else {
+                throw std::runtime_error("You must specify a full path with the -o option.");
+            }
+        }
+        else {
+            throw std::runtime_error("Unknown option specified.");
+        }
+    }
+
+    // User didn't specify an output path which is fine as it's optional
+    if (fullFilePath == "") {
+        return;
+    }
+
+    if (!std::filesystem::exists(filePath.remove_filename())) {
+        throw std::runtime_error("Folder (" + filePath.string() + ") not found to write output file to.");
+    }
+
+    g_OutputFilePath = fullFilePath;
+    g_OutputSong = true;
+}
+
+int main(const int argc, const char *argv[])
 {
     bool appleMusicFound = false;
+
+    try {
+        ParseCommandLine(argc, argv);
+    }
+    catch (const std::exception& e) {
+        std::cerr << "AppleMusicFindCurrentSong: " << e.what() << std::endl;
+        std::cerr << "usage: AppleMusicFindCurrentSong [-o|--output-file] <full_path>" << std::endl;
+        return EXIT_FAILURE;
+    }
 
     // First we must initialize COM as the AppleMusicPlayer object/class requires it
     HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE);
@@ -40,18 +99,21 @@ int main()
         std::wstring previousSong = L"UNKNOWN";
         std::wstring currentArtist;
         std::wstring currentAlbum;
-        
 
+        std::cout << "Trying to find Apple Music process...";
+        bool pressAnyKeyOutput = false;
         do
         {
-            std::cout << "Trying to find Apple Music process...";
-
             if (appleMusicFound = amp.IsAppleMusicRunning()) {
                 break;
             }
 
-            std::cout << "Not Found!" << std::endl;
-            std::cout << "Press any key to exit." << std::endl;
+            if (!pressAnyKeyOutput) {
+                std::cout << "Not Found!" << std::endl;
+                std::cout << "Will wait until it launches, otherwise, press any key to exit." << std::endl;
+                pressAnyKeyOutput = true;
+            }
+
             Sleep(500);
 
         } while (!_kbhit());
@@ -63,7 +125,7 @@ int main()
 
         std::cout << "Found!" << std::endl;
 
-        std::cout << "Press any key to exit" << std::endl;
+        std::cout << "Press any key to exit" << std::endl << std::endl;
 
         do
         {
@@ -78,11 +140,27 @@ int main()
             }
 
             if (update) {
+                currentArtist = amp.GetCurrentArtist();
+                currentAlbum = amp.GetCurrentAlbum();
+
                 // The console might not like unicode characters unfortunately,
                 // convert them to ASCII before printing out
-                std::cout << "Current Artist: " << ConvertToAscii(amp.GetCurrentArtist()) << std::endl;
-                std::cout << "Album: " << ConvertToAscii(amp.GetCurrentAlbum()) << std::endl;
+                std::cout << "Current Artist: " << ConvertToAscii(currentArtist) << std::endl;
+                std::cout << "Album: " << ConvertToAscii(currentAlbum) << std::endl;
                 std::cout << "Song: " << ConvertToAscii(currentSong) << std::endl << std::endl;
+
+                if (g_OutputSong) {
+                    std::wofstream outputFile(g_OutputFilePath);
+                    if (!outputFile.is_open()) {
+                        std::cerr << "WARNING! Failed to open " << g_OutputFilePath << " to write contents." << std::endl;
+                    }
+                    else {
+                        outputFile << "Artist: " << currentArtist << std::endl;
+                        outputFile << "Album: " << currentAlbum << std::endl;
+                        outputFile << "Song: " << currentSong << std::endl;
+                        outputFile.close();
+                    }
+                }
             }
 
             Sleep(1000);
@@ -94,8 +172,8 @@ Exit:
     CoUninitialize();
 
     if (!appleMusicFound) {
-        return 1;
+        return EXIT_FAILURE;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
