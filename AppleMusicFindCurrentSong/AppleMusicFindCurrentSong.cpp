@@ -145,14 +145,14 @@ int main(const int argc, const char *argv[])
                 std::cout << "Song: " << ConvertToAscii(currentSong) << std::endl << std::endl;
 
                 if (g_OutputSong) {
-                    std::wofstream outputFile(g_OutputFilePath);
+                    std::ofstream outputFile(g_OutputFilePath);
                     if (!outputFile.is_open()) {
                         std::cerr << "WARNING! Failed to open " << g_OutputFilePath << " to write contents." << std::endl;
                     }
                     else {
-                        outputFile << "Artist: " << currentArtist << std::endl;
-                        outputFile << "Album: " << currentAlbum << std::endl;
-                        outputFile << "Song: " << currentSong << std::endl;
+                        outputFile << "Artist: " << ConvertToAscii(currentArtist) << std::endl;
+                        outputFile << "Album: " << ConvertToAscii(currentAlbum) << std::endl;
+                        outputFile << "Song: " << ConvertToAscii(currentSong) << std::endl;
                         outputFile.close();
                     }
                 }
