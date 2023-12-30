@@ -16,6 +16,7 @@ std::string ConvertToAscii(std::wstring inputStr)
 }
 
 bool g_OutputSong = false;
+bool g_SplitFiles = false;
 bool g_WriteLabels = false;
 std::filesystem::path g_OutputFilePath = "";
 
@@ -30,7 +31,7 @@ void ParseCommandLine(const int argc, const char* argv[])
     std::filesystem::path fullFilePath = "";
     std::filesystem::path filePath = "";
 
-    if (argc > 4) {
+    if (argc > 5) {
         throw std::runtime_error("Too many command line arguments.");
     }
 
@@ -47,6 +48,9 @@ void ParseCommandLine(const int argc, const char* argv[])
         }
         else if (*it == "-l" || *it == "--labels") {
             g_WriteLabels = true;
+        }
+        else if (*it == "-s" || *it == "--split") {
+            g_SplitFiles = true;
         }
         else {
             throw std::runtime_error("Unknown option specified.");
@@ -100,8 +104,10 @@ int main(const int argc, const char *argv[])
         AppleMusicPlayer amp;
 
         std::wstring previousSong = L"UNKNOWN";
-        std::wstring currentArtist;
-        std::wstring currentAlbum;
+        
+        std::string currentArtistAscii;
+        std::string currentAlbumAscii;
+        std::string currentSongAscii;
 
         std::cout << "Trying to find Apple Music process...";
         bool pressAnyKeyOutput = false;
@@ -124,6 +130,23 @@ int main(const int argc, const char *argv[])
             goto Exit;
         }
 
+        std::filesystem::path artistFilePath;
+        std::filesystem::path albumFilePath;
+        std::filesystem::path songFilePath;
+        if (g_SplitFiles) {
+            // get the folder from g_OutputFilePath
+            artistFilePath = albumFilePath = songFilePath = g_OutputFilePath;
+            
+            artistFilePath.remove_filename();
+            artistFilePath = artistFilePath / "artist.txt";
+
+            albumFilePath.remove_filename();
+            albumFilePath = albumFilePath / "album.txt";
+
+            songFilePath.remove_filename();
+            songFilePath = songFilePath / "song.txt";
+        }
+
         std::cout << "Found!" << std::endl;
 
         std::cout << "Press any key to exit" << std::endl << std::endl;
@@ -139,14 +162,15 @@ int main(const int argc, const char *argv[])
             }
 
             if (update) {
-                currentArtist = amp.GetCurrentArtist();
-                currentAlbum = amp.GetCurrentAlbum();
+                currentArtistAscii = ConvertToAscii(amp.GetCurrentArtist());
+                currentAlbumAscii = ConvertToAscii(amp.GetCurrentAlbum());
+                currentSongAscii = ConvertToAscii(currentSong);
 
                 // The console might not like unicode characters unfortunately,
                 // convert them to ASCII before printing out
-                std::cout << "Artist: " << ConvertToAscii(currentArtist) << std::endl;
-                std::cout << "Album: " << ConvertToAscii(currentAlbum) << std::endl;
-                std::cout << "Song: " << ConvertToAscii(currentSong) << std::endl << std::endl;
+                std::cout << "Artist: " << currentArtistAscii << std::endl;
+                std::cout << "Album: " << currentAlbumAscii << std::endl;
+                std::cout << "Song: " << currentSongAscii << std::endl << std::endl;
 
                 if (g_OutputSong) {
                     std::ofstream outputFile(g_OutputFilePath);
@@ -155,17 +179,31 @@ int main(const int argc, const char *argv[])
                     }
                     else {
                         if (g_WriteLabels) {
-                            outputFile << "Artist: " << ConvertToAscii(currentArtist) << std::endl;
-                            outputFile << "Album: " << ConvertToAscii(currentAlbum) << std::endl;
-                            outputFile << "Song: " << ConvertToAscii(currentSong) << std::endl;
+                            outputFile << "Artist: " << currentArtistAscii << std::endl;
+                            outputFile << "Album: " << currentAlbumAscii << std::endl;
+                            outputFile << "Song: " << currentSongAscii << std::endl;
                         }
                         else {
-                            outputFile << ConvertToAscii(currentArtist) << std::endl;
-                            outputFile << ConvertToAscii(currentAlbum) << std::endl;
-                            outputFile << ConvertToAscii(currentSong) << std::endl;
+                            outputFile << currentArtistAscii << std::endl;
+                            outputFile << currentAlbumAscii << std::endl;
+                            outputFile << currentSongAscii << std::endl;
                         }
 
                         outputFile.close();
+                    }
+
+                    if (g_SplitFiles) {
+                        std::ofstream artistOutputFile(artistFilePath);
+                        artistOutputFile << currentArtistAscii;
+                        artistOutputFile.close();
+
+                        std::ofstream albumOutputFile(albumFilePath);
+                        albumOutputFile << currentAlbumAscii;
+                        albumOutputFile.close();
+
+                        std::ofstream songOutputFile(songFilePath);
+                        songOutputFile << currentSongAscii;
+                        songOutputFile.close();
                     }
                 }
             }
