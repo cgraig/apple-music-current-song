@@ -25,7 +25,7 @@ std::string g_ArtistFileName = "artist.txt";
 std::string g_AlbumFileName = "album.txt";
 std::string g_SongFileName = "song.txt";
 std::string g_FullSongInfoFileName = "fullsonginfo.txt";
-std::filesystem::path g_OutputFilePath = "";
+std::filesystem::path g_OutputFilePath = ".";
 
 void Usage()
 {
