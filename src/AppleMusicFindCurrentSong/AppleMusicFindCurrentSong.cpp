@@ -1,9 +1,9 @@
 #include <iostream>
 #include <fstream>
-#include <conio.h>
 #include <algorithm>
 #include <vector>
 #include <filesystem>
+#include <thread>
 #include <time.h>
 #include <AppleMusicPlayer.h>
 
@@ -26,6 +26,7 @@ std::string g_AlbumFileName = "album.txt";
 std::string g_SongFileName = "song.txt";
 std::string g_FullSongInfoFileName = "fullsonginfo.txt";
 std::filesystem::path g_OutputFilePath = ".";
+std::atomic<bool> g_ExitFlag(false);
 
 void Usage()
 {
@@ -93,6 +94,11 @@ void ParseCommandLine(const int argc, const char* argv[])
     g_OutputSong = true;
 }
 
+void wait_for_exit_function() {
+    std::cin.get();
+    g_ExitFlag = true;
+}
+
 int main(const int argc, const char *argv[])
 {
     bool appleMusicFound = false;
@@ -120,6 +126,8 @@ int main(const int argc, const char *argv[])
         return hr;
     }
 
+    std::thread t(wait_for_exit_function);
+
     //
     // Two options here with COM in play...
     // 1. Put AppleMusicPlayer on the heap and make sure to delete it
@@ -141,20 +149,21 @@ int main(const int argc, const char *argv[])
 
         std::cout << "Trying to find Apple Music process...";
         bool pressAnyKeyOutput = false;
-        do {
-            if (appleMusicFound = amp.IsAppleMusicRunning()) {
-                break;
-            }
+
+		do {
+			if (appleMusicFound = amp.IsAppleMusicRunning()) {
+				break;
+			}
 
             if (!pressAnyKeyOutput) {
                 std::cout << "Not Found!" << std::endl;
-                std::cout << "Will wait until it launches, otherwise, press any key to exit." << std::endl;
+                std::cout << "Will wait until it launches, otherwise, press ENTER to exit." << std::endl;
                 pressAnyKeyOutput = true;
             }
 
             Sleep(500);
 
-        } while (!_kbhit());
+		} while (!g_ExitFlag);
 
         if (!appleMusicFound) {
             goto Exit;
@@ -162,7 +171,7 @@ int main(const int argc, const char *argv[])
 
         std::cout << "Found!" << std::endl;
 
-        std::cout << "Press any key to exit" << std::endl << std::endl;
+        std::cout << "Press ENTER to exit" << std::endl << std::endl;
 
         if (g_WriteTrackList) {
             time_t timeNow = time(NULL);
@@ -275,7 +284,7 @@ int main(const int argc, const char *argv[])
             }
 
             Sleep(1000);
-        } while (!_kbhit());
+        } while (!g_ExitFlag);
     }
 
 Exit:
@@ -284,6 +293,10 @@ Exit:
 
     if (g_WriteTrackList && trackListOutputFile.is_open()) {
         trackListOutputFile.close();
+    }
+
+    if (g_ExitFlag) {
+        t.join();
     }
 
     if (!appleMusicFound) {
