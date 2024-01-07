@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <vector>
 #include <filesystem>
+#include <time.h>
 #include <AppleMusicPlayer.h>
 
 std::string ConvertToAscii(std::wstring inputStr)
@@ -16,20 +17,36 @@ std::string ConvertToAscii(std::wstring inputStr)
 }
 
 bool g_OutputSong = false;
+bool g_SplitFiles = false;
+bool g_WriteLabels = false;
+bool g_WriteTrackList = false;
+bool g_DisplayHelp = false;
+std::string g_ArtistFileName = "artist.txt";
+std::string g_AlbumFileName = "album.txt";
+std::string g_SongFileName = "song.txt";
+std::string g_FullSongInfoFileName = "fullsonginfo.txt";
 std::filesystem::path g_OutputFilePath = "";
 
 void Usage()
 {
-    std::cerr << "usage: AppleMusicFindCurrentSong [-o|--output-file] <full_path>" << std::endl;
+    std::cerr << "AppleMusicFindCurrentSong: Will detect current playing song in Apple Music Preview app on Windows.";
+    std::cerr << "  It will by default print out song it detects and also write to a file.  File information can be overriden with";
+    std::cerr << " various command line options." << std::endl << std::endl;
+    std::cerr << "usage: AppleMusicFindCurrentSong [-o|--output-file] <file name> [-p|--path] <path> [-l|--labels] [-s|--split] [-t|--track-list] [-?|--help]" << std::endl;
+    std::cerr << "\t-o|--output-file\tName of file to output full song information for, will default to fullsonginfo.txt." << std::endl;
+    std::cerr << "\t-p|--path\tName of folder to output song information to, will default to current directory." << std::endl;
+    std::cerr << "\t-l|--labels\tOption to add Artist:/Album:/Song: prefix to fullsonginfo.txt for each content." << std::endl;
+    std::cerr << "\t-s|--split\tOption to split Artist/Album/Song info into their own files artist.txt, album.txt, and song.txt." << std::endl;
+    std::cerr << "\t-t|--track-list\tOption to write Artist - Song for each song detected to a tracklist file." << std::endl;
+    std::cerr << "\t-?|--help\tDisplays this information." << std::endl;
+    std::cerr << std::endl;
 }
 
 void ParseCommandLine(const int argc, const char* argv[])
 {
     std::vector<std::string_view> args(argv + 1, argv + argc);
-    std::filesystem::path fullFilePath = "";
-    std::filesystem::path filePath = "";
 
-    if (argc > 3) {
+    if (argc > 9) {
         throw std::runtime_error("Too many command line arguments.");
     }
 
@@ -37,42 +54,63 @@ void ParseCommandLine(const int argc, const char* argv[])
         if (*it == "-o" || *it == "--output-file") {
             if (it + 1 != end) {
                 it++;
-                fullFilePath = *it;
-                filePath = fullFilePath;
+                g_FullSongInfoFileName = *it;
             }
             else {
-                throw std::runtime_error("You must specify a full path with the -o option.");
+                throw std::runtime_error("You must specify a file name with the -o option.");
             }
+        }
+        else if (*it == "-p" || *it == "--path") {
+            if (it + 1 != end) {
+                it++;
+                g_OutputFilePath = *it;
+            }
+            else {
+                throw std::runtime_error("You must specify a path with the -p option.");
+            }
+        }
+        else if (*it == "-l" || *it == "--labels") {
+            g_WriteLabels = true;
+        }
+        else if (*it == "-s" || *it == "--split") {
+            g_SplitFiles = true;
+        }
+        else if (*it == "-t" || *it == "--track-list") {
+            g_WriteTrackList = true;
+        }
+        else if (*it == "-?" || *it == "--help") {
+            g_DisplayHelp = true;
         }
         else {
             throw std::runtime_error("Unknown option specified.");
         }
     }
 
-    // User didn't specify an output path which is fine as it's optional
-    if (fullFilePath == "") {
-        return;
+    if (!std::filesystem::exists(g_OutputFilePath)) {
+        throw std::runtime_error("Folder (" + g_OutputFilePath.string() + ") not found to write output files to.");
     }
 
-    if (!std::filesystem::exists(filePath.remove_filename())) {
-        throw std::runtime_error("Folder (" + filePath.string() + ") not found to write output file to.");
-    }
-
-    g_OutputFilePath = fullFilePath;
     g_OutputSong = true;
 }
 
 int main(const int argc, const char *argv[])
 {
     bool appleMusicFound = false;
+    char trackListFileName[MAX_PATH];
+    std::ofstream trackListOutputFile;
 
     try {
         ParseCommandLine(argc, argv);
     }
     catch (const std::exception& e) {
         std::cerr << "AppleMusicFindCurrentSong: " << e.what() << std::endl;
-        std::cerr << "usage: AppleMusicFindCurrentSong [-o|--output-file] <full_path>" << std::endl;
+        Usage();
         return EXIT_FAILURE;
+    }
+
+    if (g_DisplayHelp) {
+        Usage();
+        return EXIT_SUCCESS;
     }
 
     // First we must initialize COM as the AppleMusicPlayer object/class requires it
@@ -96,8 +134,10 @@ int main(const int argc, const char *argv[])
         AppleMusicPlayer amp;
 
         std::wstring previousSong = L"UNKNOWN";
-        std::wstring currentArtist;
-        std::wstring currentAlbum;
+        
+        std::string currentArtistAscii;
+        std::string currentAlbumAscii;
+        std::string currentSongAscii;
 
         std::cout << "Trying to find Apple Music process...";
         bool pressAnyKeyOutput = false;
@@ -124,6 +164,40 @@ int main(const int argc, const char *argv[])
 
         std::cout << "Press any key to exit" << std::endl << std::endl;
 
+        if (g_WriteTrackList) {
+            time_t timeNow = time(NULL);
+            struct tm tmTimeNow;
+
+            if (localtime_s(&tmTimeNow, &timeNow) != 0 || !strftime(trackListFileName, MAX_PATH, "tracklist_%Y-%m-%d_%H-%M-%S.txt", &tmTimeNow)) {
+                std::cerr << "WARNING: could not create a local track list file name, will not write track listing." << std::endl;
+                g_WriteTrackList = false;
+            }
+
+            if (g_WriteTrackList) {
+                std::filesystem::path trackListFullPath = g_OutputFilePath / trackListFileName;
+                trackListOutputFile.open(trackListFullPath, std::ofstream::out | std::ofstream::app);
+                if (!trackListOutputFile.is_open()) {
+                    std::cerr << "WARNING! Failed to open " << trackListFullPath << " to write track list contents.  Will not write track listing." << std::endl;
+                    g_WriteTrackList = false;
+                }
+            }
+        }
+
+        std::filesystem::path artistFilePath;
+        std::filesystem::path albumFilePath;
+        std::filesystem::path songFilePath;
+        std::filesystem::path fullSongInfoFullPath;
+        if (g_OutputSong) {
+            fullSongInfoFullPath = g_OutputFilePath / g_FullSongInfoFileName;
+        }
+
+        if (g_SplitFiles) {
+            // get the folder from g_OutputFilePath
+            artistFilePath = g_OutputFilePath / g_ArtistFileName;
+            albumFilePath = g_OutputFilePath / g_AlbumFileName;
+            songFilePath = g_OutputFilePath / g_SongFileName;
+        }
+
         do {
             bool update = false;
 
@@ -135,25 +209,67 @@ int main(const int argc, const char *argv[])
             }
 
             if (update) {
-                currentArtist = amp.GetCurrentArtist();
-                currentAlbum = amp.GetCurrentAlbum();
+                currentArtistAscii = ConvertToAscii(amp.GetCurrentArtist());
+                currentAlbumAscii = ConvertToAscii(amp.GetCurrentAlbum());
+                currentSongAscii = ConvertToAscii(currentSong);
 
                 // The console might not like unicode characters unfortunately,
                 // convert them to ASCII before printing out
-                std::cout << "Current Artist: " << ConvertToAscii(currentArtist) << std::endl;
-                std::cout << "Album: " << ConvertToAscii(currentAlbum) << std::endl;
-                std::cout << "Song: " << ConvertToAscii(currentSong) << std::endl << std::endl;
+                std::cout << "Artist: " << currentArtistAscii << std::endl;
+                std::cout << "Album: " << currentAlbumAscii << std::endl;
+                std::cout << "Song: " << currentSongAscii << std::endl << std::endl;
 
                 if (g_OutputSong) {
-                    std::wofstream outputFile(g_OutputFilePath);
+                    std::ofstream outputFile(fullSongInfoFullPath);
                     if (!outputFile.is_open()) {
-                        std::cerr << "WARNING! Failed to open " << g_OutputFilePath << " to write contents." << std::endl;
+                        std::cerr << "WARNING! Failed to open " << fullSongInfoFullPath << " to write contents." << std::endl;
                     }
                     else {
-                        outputFile << "Artist: " << currentArtist << std::endl;
-                        outputFile << "Album: " << currentAlbum << std::endl;
-                        outputFile << "Song: " << currentSong << std::endl;
+                        if (g_WriteLabels) {
+                            outputFile << "Artist: " << currentArtistAscii << std::endl;
+                            outputFile << "Album: " << currentAlbumAscii << std::endl;
+                            outputFile << "Song: " << currentSongAscii << std::endl;
+                        }
+                        else {
+                            outputFile << currentArtistAscii << std::endl;
+                            outputFile << currentAlbumAscii << std::endl;
+                            outputFile << currentSongAscii << std::endl;
+                        }
+
                         outputFile.close();
+                    }
+
+                    if (g_SplitFiles) {
+                        std::ofstream artistOutputFile(artistFilePath);
+                        if (artistOutputFile.is_open()) {
+                            artistOutputFile << currentArtistAscii;
+                            artistOutputFile.close();
+                        }
+                        else {
+                            std::cerr << "WARNING! Failed to open " << artistFilePath << " to write artist name." << std::endl;
+                        }
+
+                        std::ofstream albumOutputFile(albumFilePath);
+                        if (albumOutputFile.is_open()) {
+                            albumOutputFile << currentAlbumAscii;
+                            albumOutputFile.close();
+                        }
+                        else {
+                            std::cerr << "WARNING! Failed to open " << albumFilePath << " to write album name." << std::endl;
+                        }
+
+                        std::ofstream songOutputFile(songFilePath);
+                        if (songOutputFile.is_open()) {
+                            songOutputFile << currentSongAscii;
+                            songOutputFile.close();
+                        }
+                        else {
+                            std::cerr << "WARNING! Failed to open " << songFilePath << " to write song name." << std::endl;
+                        }
+                    }
+
+                    if (g_WriteTrackList) {
+                        trackListOutputFile << currentArtistAscii << " - " << currentSongAscii << std::endl;
                     }
                 }
             }
@@ -165,6 +281,10 @@ int main(const int argc, const char *argv[])
 Exit:
     // Don't forget to uninitialize COM
     CoUninitialize();
+
+    if (g_WriteTrackList && trackListOutputFile.is_open()) {
+        trackListOutputFile.close();
+    }
 
     if (!appleMusicFound) {
         return EXIT_FAILURE;
