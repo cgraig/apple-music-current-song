@@ -1,0 +1,51 @@
+{
+  "version": 8,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "macos",
+      "displayName": "MacOS",
+      "description": "Build for MacOS",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
+      "generator": "Xcode",
+      "binaryDir": "${sourceDir}/build_macos"
+    },
+    {
+      "name": "windows",
+      "displayName": "Windows",
+      "description": "Build for Windows",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/build",
+      "generator": "Visual Studio 17 2022"
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows",
+      "configurePreset": "windows",
+      "displayName": "Windows",
+      "description": "Build for Windows",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "windowsdebug",
+      "configurePreset": "windows",
+      "displayName": "WindowsDebug",
+      "description": "Debug Build for Windows",
+      "configuration": "Debug"
+    }
+  ]
+}
