@@ -15,7 +15,7 @@ AppleMusicPlayer::AppleMusicPlayer() :
 
 bool AppleMusicPlayer::IsAppleMusicPid(DWORD processId)
 {
-    WCHAR szProcessName[MAX_PATH] = L"";
+    CHAR szProcessName[MAX_PATH] = "";
     bool found = false;
 
     HANDLE hProcess = OpenProcess(
@@ -27,11 +27,11 @@ bool AppleMusicPlayer::IsAppleMusicPid(DWORD processId)
         DWORD cbNeeded;
 
         if (EnumProcessModules(hProcess, &hMod, sizeof(hMod), &cbNeeded)) {
-            GetModuleBaseName(hProcess, hMod, szProcessName,
-                sizeof(szProcessName) / sizeof(WCHAR));
+            GetModuleBaseNameA(hProcess, hMod, szProcessName,
+                sizeof(szProcessName) / sizeof(CHAR));
 
-            std::wstring processName(szProcessName);
-            std::wstring appleMusicName = APPLE_MUSIC_NAME;
+            std::string processName(szProcessName);
+            std::string appleMusicName = APPLE_MUSIC_NAME;
             if (processName.find(appleMusicName) != std::string::npos) {
                 found = true;
             }

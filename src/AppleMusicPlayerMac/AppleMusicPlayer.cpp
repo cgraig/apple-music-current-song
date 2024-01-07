@@ -20,23 +20,6 @@ const std::string AppleMusicPlayer::APPLE_SCRIPT_CMD = "osascript "
     " -e \"end try\""
     " > " + APPLE_SCRIPT_OUTPUT + " 2>&1";
 
-static inline void ltrim(std::wstring& s) {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
-        return !std::isspace(ch);
-        }));
-}
-
-static inline void rtrim(std::wstring& s) {
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
-        return !std::isspace(ch);
-        }).base(), s.end());
-}
-
-static inline void trim(std::wstring& s) {
-    rtrim(s);
-    ltrim(s);
-}
-
 AppleMusicPlayer::AppleMusicPlayer() : _CurrentAlbum(L""), _CurrentArtist(L""), _CurrentSong(L"")
 {
     _Exit = false;

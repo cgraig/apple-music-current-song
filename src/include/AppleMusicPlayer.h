@@ -1,13 +1,13 @@
 #pragma once
 
-#ifdef WIN32
+#ifdef _WIN32
 #define DllExport  __declspec( dllexport )
 #else
 #define DllExport
 #endif
 
 #include <string>
-#ifdef WIN32
+#ifdef _WIN32
 #include <uiautomation.h>
 #include <atlbase.h>
 #endif
@@ -37,7 +37,7 @@ public:
     DllExport std::wstring GetCurrentAlbum();
 
 private:
-#ifdef WIN32
+#ifdef _WIN32
     CComPtr<IUIAutomation> _pAutomation;
     CComPtr<IUIAutomationElement> _pSongElement;
     CComPtr<IUIAutomationElement> _pArtistAlbumElement;
@@ -47,6 +47,7 @@ private:
     bool IsAppleMusicStillRunning() { return IsAppleMusicPid(_appleMusicPid) && _appleMusicHwnd != nullptr; }
     HRESULT InitializeAutomation();
     static BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam);
+    bool FindAppleMusic();
 #endif
 
     static const std::string APPLE_MUSIC_NAME;
