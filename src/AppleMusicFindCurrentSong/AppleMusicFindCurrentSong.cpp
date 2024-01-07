@@ -7,6 +7,10 @@
 #include <time.h>
 #include <AppleMusicPlayer.h>
 
+#ifndef WIN32
+#include <sys/syslimits.h>
+#endif
+
 std::string ConvertToAscii(std::wstring inputStr)
 {
     std::string str;
@@ -102,7 +106,12 @@ void wait_for_exit_function() {
 int main(const int argc, const char *argv[])
 {
     bool appleMusicFound = false;
-    char trackListFileName[MAX_PATH];
+#ifdef WIN32
+    const uint32_t max_path = MAX_PATH;
+#else
+    const uint32_t max_path = PATH_MAX;
+#endif
+    char trackListFileName[max_path];
     std::ofstream trackListOutputFile;
 
     try {
@@ -177,7 +186,7 @@ int main(const int argc, const char *argv[])
             time_t timeNow = time(NULL);
             struct tm tmTimeNow;
 
-            if (localtime_s(&tmTimeNow, &timeNow) != 0 || !strftime(trackListFileName, MAX_PATH, "tracklist_%Y-%m-%d_%H-%M-%S.txt", &tmTimeNow)) {
+            if (localtime_s(&tmTimeNow, &timeNow) != 0 || !strftime(trackListFileName, max_path, "tracklist_%Y-%m-%d_%H-%M-%S.txt", &tmTimeNow)) {
                 std::cerr << "WARNING: could not create a local track list file name, will not write track listing." << std::endl;
                 g_WriteTrackList = false;
             }
