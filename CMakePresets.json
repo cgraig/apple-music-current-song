@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 8,
   "cmakeMinimumRequired": {
     "major": 3,
     "minor": 28,
@@ -30,6 +30,22 @@
       "architecture": "x64",
       "binaryDir": "${sourceDir}/build",
       "generator": "Visual Studio 17 2022"
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows",
+      "configurePreset": "windows",
+      "displayName": "Windows",
+      "description": "Build for Windows",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "windowsdebug",
+      "configurePreset": "windows",
+      "displayName": "WindowsDebug",
+      "description": "Debug Build for Windows",
+      "configuration": "Debug"
     }
   ]
 }
