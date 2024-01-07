@@ -11,10 +11,18 @@
 #include <uiautomation.h>
 #include <atlbase.h>
 #endif
+#ifdef __APPLE__
+#include <thread>
+#include <mutex>
+#endif
 
 class AppleMusicPlayer {
 public:
     DllExport AppleMusicPlayer();
+
+#ifdef __APPLE__
+    DllExport ~AppleMusicPlayer();
+#endif
 
     // Check if Apple Music process is running
     DllExport bool IsAppleMusicRunning();
@@ -41,7 +49,17 @@ private:
     static BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam);
 #endif
 
-    bool FindAppleMusic();
+    static const std::string APPLE_MUSIC_NAME;
 
-    static const std::wstring APPLE_MUSIC_NAME;
+#ifdef __APPLE__
+    static const std::string APPLE_SCRIPT_CMD;
+    static const std::string APPLE_SCRIPT_OUTPUT;
+    std::thread _RunThread;
+    void RunThread();
+    std::mutex _InfoMutex;
+    std::atomic<bool> _Exit;
+    std::wstring _CurrentArtist;
+    std::wstring _CurrentAlbum;
+    std::wstring _CurrentSong;
+#endif
 };
