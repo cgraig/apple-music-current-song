@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.28.0)
+project(AppleMusicFindCurrentSong)
+add_definitions(-DUNICODE -D_UNICODE)
+add_executable(${PROJECT_NAME} AppleMusicFindCurrentSong.cpp)
+include_directories(${CMAKE_SOURCE_DIR}/src/AppleMusicPlayer)
+target_link_libraries(${PROJECT_NAME} AppleMusicPlayer)

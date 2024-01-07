@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.28.0)
+project(AppleMusicPlayer)
+SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+add_definitions(-DUNICODE -D_UNICODE)
+ADD_LIBRARY(${PROJECT_NAME} SHARED dllmain.cpp AppleMusicPlayer.cpp)
