@@ -12,7 +12,16 @@ Grab AppleMusicFindCurrentSong.exe and AppleMusicPlayer.dll from the latest rele
 AppleMusicFindCurrentSong [-o|--output-file] <full_path>
 
 ## Compilation
-Should "just build" if you're on a Windows PC and using Visual Studio 2022 Community or above (although I have to admit I haven't tried anything other than Community Edition).
+- For Windows: Install Visual Studio 2022
+- Install cmake (3.28.0 or newer)
+- Configure:
+cmake --preset windows
+
+- Compile:
+cmake --build --preset windows
+
+- If you want to compile debug compile as follows:
+cmake --build --preset windowsdebug
 
 ## Contributing
 I would love contributions, feel free to open an issue or submit a pull request!
