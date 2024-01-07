@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.28.0)
+project(AppleMusicPlayer)
+add_definitions(-DUNICODE -D_UNICODE)
+include_directories(${CMAKE_SOURCE_DIR}/src/include)
+ADD_LIBRARY(${PROJECT_NAME} SHARED AppleMusicPlayer.cpp)

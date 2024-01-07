@@ -128,12 +128,14 @@ int main(const int argc, const char *argv[])
         return EXIT_SUCCESS;
     }
 
+#ifdef WIN32
     // First we must initialize COM as the AppleMusicPlayer object/class requires it
     HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE);
     if (FAILED(hr)) {
         std::cerr << "Failed to initialize COM, exiting. (Error Code: " << hr << ")" << std::endl;
         return hr;
     }
+#endif
 
     std::thread t(wait_for_exit_function);
 
@@ -160,7 +162,7 @@ int main(const int argc, const char *argv[])
         bool pressAnyKeyOutput = false;
 
 		do {
-			if (appleMusicFound = amp.IsAppleMusicRunning()) {
+			if ((appleMusicFound = amp.IsAppleMusicRunning())) {
 				break;
 			}
 
@@ -170,7 +172,7 @@ int main(const int argc, const char *argv[])
                 pressAnyKeyOutput = true;
             }
 
-            Sleep(500);
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
 		} while (!g_ExitFlag);
 
@@ -186,10 +188,17 @@ int main(const int argc, const char *argv[])
             time_t timeNow = time(NULL);
             struct tm tmTimeNow;
 
+#ifdef WIN32
             if (localtime_s(&tmTimeNow, &timeNow) != 0 || !strftime(trackListFileName, max_path, "tracklist_%Y-%m-%d_%H-%M-%S.txt", &tmTimeNow)) {
                 std::cerr << "WARNING: could not create a local track list file name, will not write track listing." << std::endl;
                 g_WriteTrackList = false;
             }
+#else
+            if (!localtime_r(&timeNow, &tmTimeNow) || !strftime(trackListFileName, max_path, "tracklist_%Y-%m-%d_%H-%M-%S.txt", &tmTimeNow)) {
+                std::cerr << "WARNING: could not create a local track list file name, will not write track listing." << std::endl;
+                g_WriteTrackList = false;
+            }
+#endif
 
             if (g_WriteTrackList) {
                 std::filesystem::path trackListFullPath = g_OutputFilePath / trackListFileName;
@@ -292,13 +301,15 @@ int main(const int argc, const char *argv[])
                 }
             }
 
-            Sleep(1000);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         } while (!g_ExitFlag);
     }
 
 Exit:
+#ifdef WIN32
     // Don't forget to uninitialize COM
     CoUninitialize();
+#endif
 
     if (g_WriteTrackList && trackListOutputFile.is_open()) {
         trackListOutputFile.close();

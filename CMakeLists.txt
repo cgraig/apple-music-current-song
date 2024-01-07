@@ -14,3 +14,8 @@ if(CMAKE_SYSTEM MATCHES Windows)
    message(STATUS "Target system is Windows, building AppleMusicPlayer windows version")
    add_subdirectory(src/AppleMusicPlayer)
 endif()
+
+if(CMAKE_SYSTEM MATCHES Darwin)
+   message(STATUS "Target system is MacOS, building AppleMusicPlayer MacOS version")
+   add_subdirectory(src/AppleMusicPlayerMac)
+endif()
