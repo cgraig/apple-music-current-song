@@ -3,8 +3,10 @@
 #define DllExport  __declspec( dllexport )
 
 #include <string>
+#ifdef WIN32
 #include <uiautomation.h>
 #include <atlbase.h>
+#endif
 
 class AppleMusicPlayer {
 public:
@@ -23,17 +25,19 @@ public:
     DllExport std::wstring GetCurrentAlbum();
 
 private:
+#ifdef WIN32
     CComPtr<IUIAutomation> _pAutomation;
     CComPtr<IUIAutomationElement> _pSongElement;
     CComPtr<IUIAutomationElement> _pArtistAlbumElement;
     HWND _appleMusicHwnd;
     DWORD _appleMusicPid;
-
-    bool FindAppleMusic();
     bool IsAppleMusicPid(DWORD processId);
     bool IsAppleMusicStillRunning() { return IsAppleMusicPid(_appleMusicPid) && _appleMusicHwnd != nullptr; }
     HRESULT InitializeAutomation();
     static BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam);
+#endif
+
+    bool FindAppleMusic();
 
     static const std::wstring APPLE_MUSIC_NAME;
 };

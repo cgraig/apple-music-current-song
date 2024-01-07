@@ -399,3 +399,4 @@ FodyWeavers.xsd
 
 # CMake Build Directories
 build/
+build_macos/
