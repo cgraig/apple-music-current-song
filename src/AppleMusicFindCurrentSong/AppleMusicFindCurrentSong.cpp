@@ -24,10 +24,12 @@ bool g_OutputSong = false;
 bool g_SplitFiles = false;
 bool g_WriteLabels = false;
 bool g_WriteTrackList = false;
+bool g_WriteDateTime = false;
 bool g_DisplayHelp = false;
 std::string g_ArtistFileName = "artist.txt";
 std::string g_AlbumFileName = "album.txt";
 std::string g_SongFileName = "song.txt";
+std::string g_DateTimeFileName = "datetime.txt";
 std::string g_FullSongInfoFileName = "fullsonginfo.txt";
 std::filesystem::path g_OutputFilePath = ".";
 std::atomic<bool> g_ExitFlag(false);
@@ -43,6 +45,7 @@ void Usage()
     std::cerr << "\t-l|--labels\tOption to add Artist:/Album:/Song: prefix to fullsonginfo.txt for each content." << std::endl;
     std::cerr << "\t-s|--split\tOption to split Artist/Album/Song info into their own files artist.txt, album.txt, and song.txt." << std::endl;
     std::cerr << "\t-t|--track-list\tOption to write Artist - Song for each song detected to a tracklist file." << std::endl;
+    std::cerr << "\t-d|--datetime\tOption to output date time of each song to a separate datetime.txt file" << std::endl;
     std::cerr << "\t-?|--help\tDisplays this information." << std::endl;
     std::cerr << std::endl;
 }
@@ -51,7 +54,7 @@ void ParseCommandLine(const int argc, const char* argv[])
 {
     std::vector<std::string_view> args(argv + 1, argv + argc);
 
-    if (argc > 9) {
+    if (argc > 10) {
         throw std::runtime_error("Too many command line arguments.");
     }
 
@@ -83,6 +86,9 @@ void ParseCommandLine(const int argc, const char* argv[])
         else if (*it == "-t" || *it == "--track-list") {
             g_WriteTrackList = true;
         }
+        else if (*it == "-d" || *it == "--datetime") {
+            g_WriteDateTime = true;
+        }
         else if (*it == "-?" || *it == "--help") {
             g_DisplayHelp = true;
         }
@@ -112,7 +118,9 @@ int main(const int argc, const char *argv[])
     const uint32_t max_path = PATH_MAX;
 #endif
     char trackListFileName[max_path];
+    char dateTimeFileName[max_path];
     std::ofstream trackListOutputFile;
+    std::ofstream dateTimeOutputFile;
 
     try {
         ParseCommandLine(argc, argv);
@@ -184,29 +192,47 @@ int main(const int argc, const char *argv[])
 
         std::cout << "Press ENTER to exit" << std::endl << std::endl;
 
-        if (g_WriteTrackList) {
-            time_t timeNow = time(NULL);
-            struct tm tmTimeNow;
-
+        time_t timeNow = time(NULL);
+        struct tm tmTimeNow;
+        if (g_WriteTrackList || g_WriteDateTime) {
 #ifdef WIN32
             if (localtime_s(&tmTimeNow, &timeNow) != 0 || !strftime(trackListFileName, max_path, "tracklist_%Y-%m-%d_%H-%M-%S.txt", &tmTimeNow)) {
                 std::cerr << "WARNING: could not create a local track list file name, will not write track listing." << std::endl;
                 g_WriteTrackList = false;
+            }
+
+            if (localtime_s(&tmTimeNow, &timeNow) != 0 || !strftime(dateTimeFileName, max_path, "datetime_%Y-%m-%d_%H-%M-%S.txt", &tmTimeNow)) {
+                std::cerr << "WARNING: could not create a local datetime file name, will not write datetimes." << std::endl;
+                g_WriteDateTime = false;
             }
 #else
             if (!localtime_r(&timeNow, &tmTimeNow) || !strftime(trackListFileName, max_path, "tracklist_%Y-%m-%d_%H-%M-%S.txt", &tmTimeNow)) {
                 std::cerr << "WARNING: could not create a local track list file name, will not write track listing." << std::endl;
                 g_WriteTrackList = false;
             }
-#endif
 
-            if (g_WriteTrackList) {
-                std::filesystem::path trackListFullPath = g_OutputFilePath / trackListFileName;
-                trackListOutputFile.open(trackListFullPath, std::ofstream::out | std::ofstream::app);
-                if (!trackListOutputFile.is_open()) {
-                    std::cerr << "WARNING! Failed to open " << trackListFullPath << " to write track list contents.  Will not write track listing." << std::endl;
-                    g_WriteTrackList = false;
-                }
+            if (!localtime_r(&timeNow, &tmTimeNow) || !strftime(dateTimeFileName, max_path, "datetime_%Y-%m-%d_%H-%M-%S.txt", &tmTimeNow)) {
+                std::cerr << "WARNING: could not create a local datetime file name, will not write datetimes." << std::endl;
+                g_WriteDateTime = false;
+            }
+#endif
+        }
+
+        if (g_WriteTrackList) {
+            std::filesystem::path trackListFullPath = g_OutputFilePath / trackListFileName;
+            trackListOutputFile.open(trackListFullPath, std::ofstream::out | std::ofstream::app);
+            if (!trackListOutputFile.is_open()) {
+                std::cerr << "WARNING! Failed to open " << trackListFullPath << " to write track list contents.  Will not write track listing." << std::endl;
+                g_WriteTrackList = false;
+            }
+        }
+
+        if (g_WriteDateTime) {
+            std::filesystem::path dateTimeFullPath = g_OutputFilePath / dateTimeFileName;
+            dateTimeOutputFile.open(dateTimeFullPath, std::ofstream::out | std::ofstream::app);
+            if (!dateTimeOutputFile.is_open()) {
+                std::cerr << "WARNING! Failed to open " << dateTimeFullPath << " to write date time contents.  Will not write date time data." << std::endl;
+                g_WriteDateTime = false;
             }
         }
 
@@ -298,6 +324,13 @@ int main(const int argc, const char *argv[])
                     if (g_WriteTrackList) {
                         trackListOutputFile << currentArtistAscii << " - " << currentSongAscii << std::endl;
                     }
+
+                    if (g_WriteDateTime) {
+                        auto now = std::chrono::system_clock::now();
+                        std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+                        // std::ctime will include newline
+                        dateTimeOutputFile << std::ctime(&now_c);
+                    }
                 }
             }
 
@@ -313,6 +346,10 @@ Exit:
 
     if (g_WriteTrackList && trackListOutputFile.is_open()) {
         trackListOutputFile.close();
+    }
+
+    if (g_WriteDateTime && dateTimeOutputFile.is_open()) {
+        dateTimeOutputFile.close();
     }
 
     if (g_ExitFlag) {
