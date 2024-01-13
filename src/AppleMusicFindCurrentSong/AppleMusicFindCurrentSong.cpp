@@ -169,10 +169,10 @@ int main(const int argc, const char *argv[])
         std::cout << "Trying to find Apple Music process...";
         bool pressAnyKeyOutput = false;
 
-		do {
-			if ((appleMusicFound = amp.IsAppleMusicRunning())) {
-				break;
-			}
+        do {
+            if ((appleMusicFound = amp.IsAppleMusicRunning())) {
+                break;
+            }
 
             if (!pressAnyKeyOutput) {
                 std::cout << "Not Found!" << std::endl;
@@ -182,7 +182,7 @@ int main(const int argc, const char *argv[])
 
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-		} while (!g_ExitFlag);
+        } while (!g_ExitFlag);
 
         if (!appleMusicFound) {
             goto Exit;
