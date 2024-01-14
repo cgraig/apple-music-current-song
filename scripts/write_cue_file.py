@@ -27,7 +27,24 @@ if len(tracks) != len(datetimestamps):
     print("File line count mismatches, exiting!")
     sys.exit(1)
     
-with open('thecuefile.cue', 'w') as cueFile:
+outputfile = 'thecuefile.cue'
+exit = False
+if os.path.exists(outputfile):
+    while True:
+        user_input = input(f"{outputfile} already exists, do you want to overwrite? (y/n): ")
+        if user_input.lower() == "y":
+            break
+        elif user_input.lower() == "n":
+            exit = True
+            break
+        else:
+            print("Invalid input. Please type 'y' or 'n'.")
+
+if exit:
+    print(f"Exiting to avoid overwriting {outputfile}")
+    sys.exit(1)
+    
+with open(outputfile, 'w') as cueFile:
     cueFile.write("PERFORMER \"performer\"" + os.linesep)
     cueFile.write("TITLE \"Title\"" + os.linesep)
     cueFile.write("FILE \"anything.mp3\" MP3" + os.linesep)
