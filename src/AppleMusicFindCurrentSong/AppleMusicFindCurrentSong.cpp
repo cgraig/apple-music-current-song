@@ -97,6 +97,27 @@ void ParseCommandLine(const int argc, const char* argv[])
         }
     }
 
+#ifdef WIN32 // MacOS seems to handle ~/ fine out of box.
+    if (g_OutputFilePath.native().find(L"~\\") == 0) {
+        const char* homeDrive = std::getenv("HOMEDRIVE");
+        if (!homeDrive) {
+            throw std::runtime_error("Folder (" + g_OutputFilePath.string() + ") references tilde home path but HOMEDRIVE env var not set, consider full path instead.");
+        }
+
+        const char* homePath = std::getenv("HOMEPATH");
+        if (!homeDrive) {
+            throw std::runtime_error("Folder (" + g_OutputFilePath.string() + ") references tilde home path but HOMEPATH env var not set, consider full path instead.");
+        }
+
+        std::filesystem::path homeDirectory(homeDrive);
+        homeDirectory /= homePath;
+
+        std::string homeDirectoryStr = g_OutputFilePath.string().replace(0, 1, homeDirectory.string());
+        g_OutputFilePath.clear();
+        g_OutputFilePath = homeDirectoryStr;
+    }
+#endif
+
     if (!std::filesystem::exists(g_OutputFilePath)) {
         throw std::runtime_error("Folder (" + g_OutputFilePath.string() + ") not found to write output files to.");
     }
